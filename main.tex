@@ -2,7 +2,8 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[margin=0.5in]{geometry}
-\usepackage{kpfonts}
+\usepackage{tgpagella}
+\usepackage{mathpazo}
 
 \PassOptionsToPackage{usenames, dvipsnames}{xcolor}
 \usepackage{figures/tikzit}
@@ -14,6 +15,7 @@
 \usepackage{microtype}
 \usepackage{enumitem}
 \usepackage{mathpartir}
+\usepackage{mathtools}
 
 \usepackage[style=alphabetic]{biblatex}
 \usepackage[
@@ -269,7 +271,7 @@ For \(\listvar{v} \in \valuetuple{n}\), we write \(
 \coloneqq
 \iltikzfig{circuits/components/waveforms/register}[val=\listvar{v},width=n]
 \) for a `register'; we want to find the outputs of a circuit given some input
-registers, i.e.\
+registers, i.e. reductions such that \
 \(
 \iltikzfig{circuits/productivity/productive-goal-lhs}
 \reduction^\star
@@ -445,6 +447,8 @@ behaviour.
 An ad-hoc equational theory was presented in~\cite{ghica2016categorical} but
 these were picked as `reasonable' equations on circuits; here we are guided by
 the stream semantics.
+The notion of Mealy form will once again come in useful, so we first reframe the
+\((\mealyeqn)\) rule in terms of equations shown in \cref{fig:mealy-equations}.
 
 \begin{figure}[p]
     \centering
@@ -487,21 +491,71 @@ the stream semantics.
     \label{fig:mealy-equations}
 \end{figure}
 
-The notion of Mealy form will once again come in useful, so we first reframe the
-\((\mealyeqn)\) rule in terms of equations shown in \cref{fig:mealy-equations}.
-
 A circuit in Mealy form has a \emph{state} and a \emph{combinational core}.
 One might think that we can just use equations on combinational circuits to
 translate between circuits with the same state, but this is not guaranteed to
 work: some circuits with the same behaviour and state may have cores with
 different semantics.
 
+\begin{definition}
+    Let \(\lvert{-}\rvert\) be a fixed procedure mapping a function
+    \(\morph{f}{\valuetuple{m}}{\valuetuple{n}}\) to a circuit \(
+    \iltikzfig{strings/category/f}[box=|f|,colour=seq]
+    \) such that \(
+    \circuittostream[
+        \iltikzfig{strings/category/f}[box=|f|,colour=seq]
+    ]{}(\sigma)(i)
+    =
+    f(\sigma(i))
+    \).
+\end{definition}
 
-One class of equations in our equational theory will be
-those to bring combinational circuits into some kind of normal form.
+One can think of \(|f|\) as the `canonical syntactic representation' of a
+function; if a circuit is in this form it is easy to tell what function it
+represents.
 For Belnap circuits, this normal form is a variation of the standard disjunctive
-normal form used for Booleans, and the equations necessary to bring circuits to
-this form are illustrated in \cref{fig:normal-form-equations}.
+normal form used for Booleans; the details are discussed
+in~\cite[App. A]{ghica2024fully}.
+
+\begin{lemma}
+    Any combinational circuit \(
+    \iltikzfig{strings/category/f}[box=f,colour=comb]
+    \) is equal to a circuit in the image of \(\lvert{-}\rvert\) by the equations in
+    \cref{fig:normal-form-equations}.
+\end{lemma}
+
+Now that
+
+\begin{definition}[Encoding]
+
+\end{definition}
+
+Now the normalisation equations can be used to translate the new combinational
+core back into a normal form.
+But even if two circuits in Mealy form have the same state, they
+
+\begin{definition}{Bisimilarity}
+    Given two functions \(\morph{f}{\valuetuple{x+m}}{\valuetuple{x+n}}\) and
+    \(\listvar{s} \in \valuetuple{x}\), let their
+    \emph{states from \(\listvar{s}\)} be the set \(
+    S_{f,g,\listvar{s}} \subseteq \valuetuple{x} \times \valuetuple{x}
+    \) containing
+    \((\listvar{s}, \listvar{s})\) and closed under \(
+    (\listvar{r},\listvar{t})
+    \mapsto
+    \left(
+    \proj{0}(f(\listvar{r},\listvar{v})),
+    \proj{0}(g(\listvar{t},\listvar{t}))
+    \right)\)
+    for any \(\listvar{v} \in \valuetuple{m}\).
+    The functions \(f\) and \(g\) are \emph{bisimilar from \(\listvar{s}\)}
+    if for each \((\listvar{r}, \listvar{t}) \in S_{f,g,\listvar{s}}\) and
+    \(\listvar{v} \in \valuetuple{m}\), \(
+    \proj{1}(f(\listvar{r}, \listvar{v}))
+    =
+    \proj{1}(f(\listvar{t}, \listvar{v}))
+    \).
+\end{definition}
 
 \begin{figure}[p]
     \centering
@@ -676,7 +730,7 @@ this form are illustrated in \cref{fig:normal-form-equations}.
     }{
         \iltikzfig{circuits/axioms/belnap/or-associativity-rhs}
     }{\orassoc}\)
-    \quad
+    \\[1em]
     \(\equationdisplay{
         \iltikzfig{circuits/axioms/belnap/and-commutativity-lhs}
     }{
@@ -688,18 +742,6 @@ this form are illustrated in \cref{fig:normal-form-equations}.
     }{
         \iltikzfig{circuits/axioms/belnap/or-commutativity-rhs}
     }{\orcomm}\)
-    \\[1em]
-    \(\equationdisplay{
-        \iltikzfig{circuits/axioms/belnap/and-or-distributivity-lhs}
-    }{
-        \iltikzfig{circuits/axioms/belnap/and-or-distributivity-rhs}
-    }{\andorddisteqn}\)
-    \quad
-    \(\equationdisplay{
-        \iltikzfig{circuits/axioms/belnap/or-and-distributivity-lhs}
-    }{
-        \iltikzfig{circuits/axioms/belnap/or-and-distributivity-rhs}
-    }{\oranddisteqn}\)
     \quad
     \(\equationdisplay{
         \iltikzfig{circuits/axioms/belnap/and-idempotent-lhs}
@@ -714,6 +756,18 @@ this form are illustrated in \cref{fig:normal-form-equations}.
     }{\oridemeqn}\)
     \\[1em]
     \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/and-or-distributivity-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/and-or-distributivity-rhs}
+    }{\andorddisteqn}\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/or-and-distributivity-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/or-and-distributivity-rhs}
+    }{\oranddisteqn}\)
+    \\[1em]
+    \(\equationdisplay{
         \iltikzfig{circuits/axioms/belnap/absorption-2-lhs}
     }{
         \iltikzfig{circuits/axioms/belnap/absorption-2-rhs}
@@ -724,6 +778,7 @@ this form are illustrated in \cref{fig:normal-form-equations}.
     }{
         \iltikzfig{circuits/axioms/belnap/absorption-1-rhs}
     }{\orabsandeqn}\)
+    \quad
     \(\equationdisplay{
         \iltikzfig{circuits/axioms/belnap/translation/and-fork-lhs}
     }{
@@ -754,7 +809,7 @@ this form are illustrated in \cref{fig:normal-form-equations}.
         \iltikzfig{strings/structure/comonoid/unitality-l-rhs}
     }{\forkuniteqn}\)
     \caption{
-        Set of \emph{Belnap normalisation equations}.
+        Set of \emph{Belnap normalisation equations}
     }
     \label{fig:normal-form-equations}
 \end{figure}
@@ -762,16 +817,23 @@ this form are illustrated in \cref{fig:normal-form-equations}.
 \begin{figure}
     \centering
     \(\equationdisplay{
-        \iltikzfig{circuits/productivity/mealy-form}[core=f]
+        \iltikzfig{circuits/productivity/mealy-form}[core=|f|]
     }{
-        \iltikzfig{circuits/algebraic/state-encoding}[core=f]
+        \iltikzfig{circuits/algebraic/state-encoding}[core=|f|]
     }{\mathsf{State}}\)
-    \quad
+    \qquad
     \(\equationdisplay{
-        \iltikzfig{circuits/productivity/mealy-form}[core=f]
+        \iltikzfig{circuits/productivity/mealy-form}[core=|f|]
     }{
-        \iltikzfig{circuits/productivity/mealy-form}[core=g]
+        \iltikzfig{circuits/productivity/mealy-form}[core=|g|]
     }{\mathsf{Bisim}}\)
+    \,\,
+    \begin{minipage}{0.15\textwidth}
+        \centering
+        where \(f\) and \(g\) are bisimilar from \(\listvar{s}\)
+    \end{minipage}
+    \caption{Families of \emph{Mealy transformation equations}}
+    \label{fig:mealy-transformation-equations}
 \end{figure}
 
 \printbibliography[heading=bibintoc,title={References}]
