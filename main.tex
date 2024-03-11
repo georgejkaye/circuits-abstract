@@ -13,6 +13,7 @@
 \usepackage{stmaryrd}
 \usepackage{microtype}
 \usepackage{enumitem}
+\usepackage{mathpartir}
 
 \usepackage[style=alphabetic]{biblatex}
 \usepackage[
@@ -36,6 +37,8 @@
 \setcounter{biburlucpenalty}{100}
 \setcounter{biburllcpenalty}{100}
 
+\newcommand{\bgcolour}{white}
+
 \addbibresource{refs/refs.biblatex.bib}
 \pagenumbering{gobble}
 
@@ -53,17 +56,15 @@
 
 \paragraph*{Contribution.}
 
-Digital circuits ubiquitous, so it may seem improbable that there are
+Digital circuits are ubiquitous, so it may seem improbable that there are
 theoretical gaps remaining in their understanding.
 However, until recently we did not have a \emph{fully compositional} model of
 digital circuits; by this we mean that a larger circuit can be built from
-smaller circuits without paying heed to the internal
-structure of these smaller circuits.
+smaller circuits without considering their internal structure.
 The sticking point was usually the presence of
 \emph{non-delay-guarded feedback}~\cite{malik1994analysis}, which can lead to
 undesired behaviour and is often forbidden in circuit design.
-Nevertheless, to truly have a compositional theory for \emph{all} digital
-circuits it cannot be ignored, and in fact careful use of it can lead to more
+Nevertheless, using it carefully can lead to more
 efficient circuits~\cite{riedel2004cyclic,riedel2012cyclic}.
 
 This line of work was inspired by that of Lafont on
@@ -88,7 +89,7 @@ Here we will restrict to a concrete signature
 representing \emph{gate-level circuits}; rather than Boolean values, we use the
 four-valued system of \emph{Belnap logic}.
 
-\begin{definition}[Belnap~\cite{belnap1977useful}]
+\begin{definition}[Belnap logic~\cite{belnap1977useful}]
     Let \(\values \coloneqq \{\bot,\belnapfalse,\belnaptrue,\top\}\) be the set
     of \emph{Belnap values}, respectively represent \emph{no signal}
     (a disconnected wire), a \emph{false signal}, a \emph{true signal}, and
@@ -130,13 +131,12 @@ is denoted as \(\iltikzfig{strings/structure/monoid/init}[colour=comb]\).
 These are followed by an \(\andgate\), \(\orgate\) and \(\notgate\) gate, and
 constructs for forking, joining and eliminating wires.
 The final generator is a \emph{delay} of one unit of time.
-Light blue components are \emph{combinational}: they model functions.
-Dark green components are \emph{sequential}: they add state to circuits.
-We draw arbitrary combinational and sequential circuits as \(
+Light blue circuits \(
 \iltikzfig{strings/category/f}[box=f,colour=comb]
-\) and \(
+\)  are \emph{combinational}: they model functions.
+Dark green circuits \(
 \iltikzfig{strings/category/f}[box=f,colour=seq]
-\) respectively.
+\) are \emph{sequential}: they have state.
 
 \paragraph*{Denotational semantics.}
 
@@ -145,29 +145,17 @@ morphisms as \emph{stream functions}.
 Streams \(\sigma,\tau \in \stream{A}\) can be viewed as functions
 \(\nat \to A\), so we will use the notation \(\sigma(i)\) to obtain the \(i\)-th
 element of a stream.
+
 We must identify the properties of stream functions that describe circuit
 behaviour.
-
-\begin{definition}[Stream derivative~\cite{rutten2006algebraic}]
-    Let \(\morph{\streamderv}{\valuetuplestream{m}}{\valuetuplestream{m}}\) be
-    defined as \(\sigma \mapsto (i \mapsto \sigma(i+1))\).
-    Given a stream function \(
-    \morph{f}{\valuetuplestream{m}}{\valuetuplestream{n}}
-    \) and input \(a \in \valuetuple{m}\), its \emph{stream derivative on \(a\)}
-    is the stream function \(
-    \sigma \mapsto \streamderv(f(a \streamcons \sigma))
-    \).
-\end{definition}
-
-\begin{definition}
-    Let \(\morph{\streamderv}{\valuetuplestream{m}}{\valuetuplestream{m}}\) be
-    a stream function; \(f\) is called \emph{causal} if \(\sigma(j) = \tau(j)\)
-    for all \(j \leq i\) implies \(f(\sigma)(i) = f(\tau)(i)\), and it is called
-    \emph{finitely specified} if it has finitely many stream derivatives.
-\end{definition}
-
-As the components of circuits are monotone, stream functions modelling circuits
-must also be monotone with respect to the pointwise ordering on stream elements.
+They are \emph{causal}: the \(i\)-th element of a circuit can only be computed
+from the first \(i\) elements of the inputs.
+They are \emph{monotone} with respect to the pointwise ordering on stream
+elements, as the components of circuits are monotone.
+Finally they are \emph{finitely specified} as circuits have finitely many
+states: although streams themselves are infinite, eventually a function to
+compute the \(i\)-th element of an output stream based on the input stream must
+repeat.
 
 \begin{definition}
     Let \(\mathbf{Stream}\) be the PROP with morphisms \(m \to n\) the monotone,
@@ -182,82 +170,36 @@ suitable setting for modelling digital circuits with feedback.
     \(\mathbf{Stream}\) is traced.
 \end{proposition}
 
-Semantics are assigned to circuits using a \emph{traced PROP morphism}: a
-symmetric traced monoidal functor between PROPs.
+Semantics are assigned using a PROP morphism
+\(\morph{\circuittostream{}}{\scircsigma}{\mathbf{Stream}}\).
+On combinational circuits this is straightforward;  on sequential circuits this
+is \(
+\circuittostream[
+    \iltikzfig{circuits/components/values/vs}[val=v]
+]{}()(0)
+\coloneqq
+v
+\), \(
+\circuittostream[
+    \iltikzfig{circuits/components/values/vs}[val=v]
+]{}()(k+1)
+\coloneqq
+\bot
+\), \(
+\circuittostream[
+    \iltikzfig{circuits/components/waveforms/delay}
+]{}(\sigma)(0)
+\coloneqq
+\bot
+\), and \(
+\circuittostream[
+    \iltikzfig{circuits/components/waveforms/delay}
+]{}(\sigma)(k+1)
+\coloneqq
+\sigma(k)
+\).
 
-\begin{definition}
-    Let \(\morph{\circuittostream{}}{\scircsigma}{\mathbf{Stream}}\) be
-    the traced PROP morphism defined as
-    \begin{gather*}
-        \circuittostream[
-            \iltikzfig{strings/structure/monoid/init}[colour=comb]
-        ]{}()(i)
-        \coloneqq
-        \bot
-        \quad
-        \circuittostream[
-            \iltikzfig{circuits/components/gates/and}
-        ]{}(\sigma, \tau)(i)
-        \coloneqq
-        \sigma(i) \land \tau(i)
-        \quad
-        \circuittostream[
-            \iltikzfig{circuits/components/gates/or}
-        ]{}(\sigma, \tau)(i)
-        \coloneqq
-        \sigma(i) \lor \tau(i)
-        \\[0.25em]
-        \circuittostream[
-            \iltikzfig{circuits/components/gates/not}
-        ]{}(\sigma)(i)
-        \coloneqq
-        \neg \sigma(i)
-        \quad
-        \circuittostream[
-            \iltikzfig{strings/structure/comonoid/copy}[colour=comb]
-        ]{}(\sigma)(i)
-        \coloneqq
-        (\sigma(i), \sigma(i))
-        \quad
-        \circuittostream[
-            \iltikzfig{strings/structure/monoid/merge}[colour=comb]
-        ]{}(\sigma, \tau)(i)
-        \coloneqq
-        \sigma(i) \ljoin \tau(i)
-        \circuittostream[
-            \iltikzfig{strings/structure/comonoid/discard}[colour=comb]
-        ]{}(\sigma)(i)
-        \coloneqq
-        ()
-        \\[0.25em]
-        \quad
-        \circuittostream[
-            \iltikzfig{circuits/components/values/vs}[val=v]
-        ]{}()(k+1)
-        \coloneqq
-        \bot
-        \quad
-        \circuittostream[
-            \iltikzfig{circuits/components/values/vs}[val=v]
-        ]{}()(0)
-        \coloneqq
-        v
-        \quad
-        \circuittostream[
-            \iltikzfig{circuits/components/waveforms/delay}
-        ]{}(\sigma)(0)
-        \coloneqq
-        \bot
-        \quad
-        \circuittostream[
-            \iltikzfig{circuits/components/waveforms/delay}
-        ]{}(\sigma)(k+1)
-        \coloneqq
-        \sigma(k)
-    \end{gather*}
-\end{definition}
-
-\begin{figure*}[p]
+\begin{figure}[p]
     \centering
     \tikzfig{circuits/a4}
     \qquad
@@ -297,7 +239,7 @@ symmetric traced monoidal functor between PROPs.
     \caption{The lattice structure on \(\values\), and the truth tables
         of Belnap logic gates~\cite{belnap1977useful}.}
     \label{fig:belnap}
-\end{figure*}
+\end{figure}
 
 
 \begin{definition}[Denotational equivalence]
@@ -319,7 +261,435 @@ symmetric traced monoidal functor between PROPs.
 
 \paragraph*{Operational semantics.}
 
+To better relate the internal structure and behaviour of a circuit, we will now
+define an \emph{operational semantics} which evaluates circuits using
+\emph{reductions}.
+For \(\listvar{v} \in \valuetuple{n}\), we write \(
+\iltikzfig{circuits/components/waveforms/register-shorthand}[val=\listvar{v},width=n]
+\coloneqq
+\iltikzfig{circuits/components/waveforms/register}[val=\listvar{v},width=n]
+\) for a `register'; we want to find the outputs of a circuit given some input
+registers, i.e.\
+\(
+\iltikzfig{circuits/productivity/productive-goal-lhs}
+\reduction^\star
+\iltikzfig{circuits/productivity/productive-goal-rhs}
+\).
+
+\begin{definition}
+    A circuit is in \emph{pre-Mealy form} if it is in the form \(
+    \iltikzfig{circuits/productivity/pre-mealy-form}[core=\hat{F},state=\listvar{s},dom=m,cod=n,trace=x,delay=y]
+    \) and in \emph{Mealy form} if it is in the form \(
+    \iltikzfig{circuits/productivity/mealy-form}[core=\hat{F},state=\listvar{s},dom=m,cod=n,delay=y]
+    \).
+\end{definition}
+
+Any circuit can be translated into pre-Mealy form using the \((\mealyeqn)\)
+rule in \cref{fig:rules}.
+However, the \emph{non-delay-guarded feedback} blocks attempts to translate this
+into Mealy form.
+As the components of our circuits are monotone and we work in a finite lattice,
+we can exploit the Kleene fixed-point theorem.
+
+\begin{definition}[Iteration]
+    For a combinational circuit \(
+    \iltikzfig{strings/category/f-2-2}[box=f,colour=comb,dom1=x,dom2=m,cod1=x,cod2=n],
+    \)
+    let its \emph{\(n\)th iteration} \(
+    \iltikzfig{strings/category/f-1-2}[box=f^n,colour=comb,dom=m,cod1=x,cod2=n]
+    \) be defined inductively over \(n\) as \(
+    \iltikzfig{circuits/instant-feedback/f0-box}[box=f,dom=m,trace=x,cod=n]
+    \coloneqq
+    \iltikzfig{circuits/instant-feedback/f0-definition}[box=f,dom=m,trace=x,cod=n]
+    \) and \(
+    \iltikzfig{circuits/instant-feedback/fkp1-box}[box=f,dom=m,trace=x,cod=n]
+    \coloneqq
+    \iltikzfig{circuits/instant-feedback/fkp1-definition}[box=f,dom=m,trace=x,cod=n]
+    \).
+\end{definition}
+
+The \((\instantfeedbackeqn)\) rule in \cref{fig:rules} uses the fact that
+the longest chain in \(\valuetuple{x}\) is \(2x+1\) to replace non-delay-guarded
+feedback with a sequence of iterations; this means that any circuit can be
+reduced to one in Mealy form.
+
+We can then precompose a circuit in Mealy form with registers
+apply \((\streamingeqn)\) (`streaming') to obtain copies of the circuit for what
+is happening `now' and what is happening `later', and then apply
+rules showing the interaction of values with combinational components to find
+the outputs of the circuit.
+
+\begin{corollary}[Productivity (\cite{ghica2024fully}, Cor. 91)]\label{cor:productivity}
+    For a sequential circuit \(
+    \iltikzfig{strings/category/f}[box=f,colour=seq,dom=m,cod=n]
+    \) and inputs \(\listvar{v} \in \valuetuple{m}\), there exists
+    \(\listvar{w} \in \valuetuple{n}\) such that \(
+    \iltikzfig{circuits/productivity/productive-goal-lhs}[box=f,input=\listvar{v},dom=m,cod=n]
+    \reduction^\star
+    \iltikzfig{circuits/productivity/productive-goal-rhs}[box=g,output=\listvar{w},dom=m,cod=n]
+    \) by applying \(\mealyeqn\), \(\instantfeedbackeqn\) and \(\streamingeqn\)
+    followed by the \((\forkeqn)\), \((\joineqn)\), \((\stubeqn)\)
+    and the \((\gateeqn)\) rules exhaustively.
+\end{corollary}
+
+\begin{figure}[p]
+    \centering
+    \begin{mathpar}
+        \inferrule{
+            \iltikzfig{circuits/productivity/trace-delay}[core=f,state=\listvar{v},dom=m,cod=n,delay=y,trace=x,valwidth=z]
+        }{
+            \iltikzfig{circuits/productivity/mealy-rule}[core=f,trace=x,delays=y,values=z]
+        }%
+        \mealyeqn
+        \quad
+        \inferrule{
+            \iltikzfig{circuits/instant-feedback/equation-lhs}[box=f]
+        }{
+            \iltikzfig{circuits/instant-feedback/fixpoint-concrete}[box=f]
+        }
+        \instantfeedbackeqn
+        \quad
+        \inferrule{
+            \iltikzfig{circuits/axioms/generalised-streaming-lhs}[box=f]
+        }{
+            \iltikzfig{circuits/axioms/generalised-streaming-rhs}[box=f]
+        }%
+        \streamingeqn
+        \quad
+        \inferrule{
+            \iltikzfig{circuits/axioms/fork-lhs}[val=v]
+        }{
+            \iltikzfig{circuits/axioms/fork-rhs}[val=v]
+        }%
+        \forkeqn
+        \quad
+        \inferrule{
+            \iltikzfig{circuits/axioms/join-lhs}[val1=v,val2=w]
+        }{
+            \iltikzfig{circuits/axioms/join-rhs}[val1=v,val2=w]
+        }%
+        \joineqn
+        \quad
+        \inferrule{
+            \iltikzfig{circuits/axioms/stub-lhs}[val=v]
+        }{
+            \iltikzfig{strings/monoidal/empty}
+        }%
+        \stubeqn
+        \quad
+        \inferrule{
+            \iltikzfig{circuits/axioms/gate-lhs}[gate=p,input=\listvar{v}]
+        }{
+            \iltikzfig{circuits/axioms/gate-rhs}[gate=p,input=\listvar{v}]
+        }%
+        \gateeqn
+    \end{mathpar}
+    \caption{
+        Productive reductions
+    }
+    \label{fig:rules}
+\end{figure}
+
+\begin{figure}[p]
+    \begin{gather*}
+        \iltikzfig{circuits/productivity/productive-goal-lhs}[box=f]
+        \reduction
+        \iltikzfig{circuits/productivity/mealy-form-applied}[core=\hat{f}]
+        \reduction
+        \iltikzfig{circuits/productivity/mealy-form-streamed}[core=\hat{f}]
+        \reduction
+        \iltikzfig{circuits/productivity/mealy-form-instant}[core=\hat{f}]
+        \reduction
+        \iltikzfig{circuits/productivity/mealy-form-instant-registers}[core=\hat{f}]
+        \reduction
+        \iltikzfig{circuits/productivity/mealy-form-produced}[core=\hat{f}]
+        \coloneqq
+        \iltikzfig{circuits/productivity/productive-goal-rhs}[box=G]
+    \end{gather*}
+    \caption{Processing inputs to a circuit}
+    \label{fig:productivity}
+\end{figure}
+
+The general procedure for processing the inputs to a circuit using productivity
+is illustrated in \cref{fig:productivity}.
+This can be applied repeatedly in order to determine the outputs of a
+circuit over time.
+By applying it enough we can tell if two circuits are \emph{observationally}
+equivalent.
+
+\begin{definition}[Observational equivalence]
+    Two circuits with no more than \(c\) delay components are
+    \emph{observationally equivalent} \(
+    \iltikzfig{strings/category/f}[box=f,colour=seq]
+    \sim
+    \iltikzfig{strings/category/f}[box=g,colour=seq]
+    \) if productivity produces the same outputs for all inputs of length
+    \(|\values^c|+1\).
+\end{definition}
+
+\begin{corollary}[\cite{ghica2024fully}, Cor. 67]
+    There is an isomorphism of PROPs
+    \(\scirc{\Sigma} / {\sim} \cong \scirc{\Sigma} / {\approx}\).
+\end{corollary}
+
 \paragraph*{Algebraic semantics.}
+
+\begin{figure}[p]
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \(\equationdisplay{
+            \iltikzfig{circuits/axioms/belnap/translation/explosion-lhs}
+        }{
+            \iltikzfig{circuits/axioms/belnap/translation/explosion-rhs}
+        }{
+            \belnapexpeqn
+        }\)
+    \end{minipage}
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \(\equationdisplay{
+            \iltikzfig{circuits/axioms/belnap/translation/join-and-lhs}
+        }{
+            \iltikzfig{circuits/axioms/belnap/translation/join-and-rhs}
+        }{
+            \joinandeqn
+        }\)
+        \\[1em]
+        \(\equationdisplay{
+            \iltikzfig{circuits/axioms/belnap/translation/join-or-lhs}
+        }{
+            \iltikzfig{circuits/axioms/belnap/translation/join-or-rhs}
+        }{
+            \joinoreqn
+        }\)
+    \end{minipage}
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \(\equationdisplay{
+            \iltikzfig{circuits/axioms/belnap/translation/de-morgan-and-lhs}
+        }{
+            \iltikzfig{circuits/axioms/belnap/translation/de-morgan-and-rhs}
+        }{
+            \demorganand
+        }\)
+        \\
+        \(\equationdisplay{
+            \iltikzfig{circuits/axioms/belnap/translation/de-morgan-or-lhs}
+        }{
+            \iltikzfig{circuits/axioms/belnap/translation/de-morgan-or-rhs}
+        }{
+            \demorganor
+        }\)
+    \end{minipage}
+    \\[1em]
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/translation/not-fork-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/translation/not-fork-rhs}
+    }{
+        \notforkeqn
+    }\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/translation/and-fork-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/translation/and-fork-rhs}
+    }{
+        \andforkeqn
+    }\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/translation/or-fork-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/translation/or-fork-rhs}
+    }{
+        \orforkeqn
+    }\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{strings/structure/bialgebra/merge-copy-lhs}
+    }{
+        \iltikzfig{strings/structure/bialgebra/merge-copy-rhs}
+    }{
+        \joinforkeqn
+    }\)
+    \\[1em]
+    \(\equationdisplay{
+        \iltikzfig{strings/structure/bialgebra/init-copy-lhs}
+    }{
+        \iltikzfig{strings/structure/bialgebra/init-copy-rhs}
+    }{
+        \botforkeqn
+    }\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/translation/and-and-idempotent-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/translation/and-and-idempotent-rhs}
+    }{
+        \andandidemeqn
+    }\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/translation/or-or-idempotent-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/translation/or-or-idempotent-rhs}
+    }{
+        \ororidemeqn
+    }\)
+    \\[1em]
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/and-or-distributivity-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/and-or-distributivity-rhs}
+    }{
+        \andorddisteqn
+    }\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/or-and-distributivity-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/or-and-distributivity-rhs}
+    }{
+        \oranddisteqn
+    }\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{strings/structure/comonoid/commutativity-lhs}
+    }{
+        \iltikzfig{strings/structure/comonoid/commutativity-rhs}
+    }{
+        \forkcommeqn
+    }\)
+    \\[1em]
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/translation/bot-and-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/translation/bot-x-rhs}
+    }{
+        \botandeqn
+    }\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/translation/bot-or-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/translation/bot-x-rhs}
+    }{
+        \botoreqn
+    }\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/translation/bot-and-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/translation/bot-x-rhs}
+    }{
+        \botnoteqn
+    }\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/double-negation-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/double-negation-rhs}
+    }{
+        \dneeqn
+    }\)
+    \\[1em]
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/and-associativity-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/and-associativity-rhs}
+    }{\andassoc}\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/or-associativity-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/or-associativity-rhs}
+    }{\orassoc}\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/and-commutativity-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/and-commutativity-rhs}
+    }{\andcomm}\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/or-commutativity-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/or-commutativity-rhs}
+    }{\orcomm}\)
+    \\[1em]
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/and-or-distributivity-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/and-or-distributivity-rhs}
+    }{\andorddisteqn}\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/or-and-distributivity-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/or-and-distributivity-rhs}
+    }{\oranddisteqn}\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/and-idempotent-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/and-idempotent-rhs}
+    }{\andidemeqn}\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/or-idempotent-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/or-idempotent-rhs}
+    }{\oridemeqn}\)
+    \\[1em]
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/absorption-2-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/absorption-2-rhs}
+    }{\andabsoreqn}\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/absorption-1-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/absorption-1-rhs}
+    }{\orabsandeqn}\)
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/translation/and-fork-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/translation/and-fork-rhs}
+    }{\andforkeqn}\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/axioms/belnap/translation/or-fork-lhs}
+    }{
+        \iltikzfig{circuits/axioms/belnap/translation/or-fork-rhs}
+    }{\andforkeqn}\)
+    \\[1em]
+    \(\equationdisplay{
+        \iltikzfig{strings/structure/comonoid/commutativity-rhs}
+    }{
+        \iltikzfig{strings/structure/comonoid/commutativity-lhs}
+    }{\forkcommeqn}\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{strings/structure/comonoid/associativity-lhs}
+    }{
+        \iltikzfig{strings/structure/comonoid/associativity-rhs}
+    }{\forkassoceqn}\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{strings/structure/comonoid/unitality-l-lhs}
+    }{
+        \iltikzfig{strings/structure/comonoid/unitality-l-rhs}
+    }{\forkuniteqn}\)
+    \caption{
+        Set of \emph{Belnap normalisation equations}.
+    }
+    \label{fig:normal-form-equations}
+\end{figure}
+
 
 \printbibliography[heading=bibintoc,title={References}]
 
