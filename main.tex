@@ -1,0 +1,56 @@
+\documentclass[10pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[margin=0.5in]{geometry}
+\usepackage{kpfonts}
+
+\PassOptionsToPackage{usenames, dvipsnames}{xcolor}
+\usepackage{figures/tikzit}
+
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{stmaryrd}
+\usepackage{microtype}
+\usepackage{enumitem}
+
+\usepackage[style=alphabetic]{biblatex}
+\usepackage[colorlinks=true, citecolor=Green, linkcolor=NavyBlue, urlcolor=BrickRed, pdftitle={Fully abstract categorical semantics for digital circuits}]{hyperref}
+\usepackage[capitalise]{cleveref}
+
+\input{macros/sets}
+\input{macros/category}
+\input{macros/streams}
+\input{macros/circuits}
+\input{macros/theorems}
+
+\input{figures/circuits.tikzstyles}
+\input{figures/circuits.tikzdefs}
+
+\setcounter{biburlnumpenalty}{100}
+\setcounter{biburlucpenalty}{100}
+\setcounter{biburllcpenalty}{100}
+
+\addbibresource{refs/refs.biblatex.bib}
+\pagenumbering{gobble}
+
+\title{\vspace{-3em}A Fully Compositional Theory of Sequential Digital Circuits\\\textbf{Extended abstract}}
+\author{\textbf{George Kaye}, David Sprunger and Dan R. Ghica}
+\date{}
+
+\begin{document}
+    \maketitle
+
+    \paragraph*{Contribution.}
+
+    \paragraph*{Syntax.}
+
+    \paragraph*{Denotational semantics.}
+
+    \paragraph*{Operational semantics.}
+
+    \paragraph*{Algebraic semantics.}
+
+    \printbibliography[heading=bibintoc,title={References}]
+
+\end{document}
