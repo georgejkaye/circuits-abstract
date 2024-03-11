@@ -313,11 +313,14 @@ the longest chain in \(\valuetuple{x}\) is \(2x+1\) to replace non-delay-guarded
 feedback with a sequence of iterations; this means that any circuit can be
 reduced to one in Mealy form.
 
-We can then precompose a circuit in Mealy form with registers
-apply \((\streamingeqn)\) (`streaming') to obtain copies of the circuit for what
-is happening `now' and what is happening `later', and then apply
-rules showing the interaction of values with combinational components to find
-the outputs of the circuit.
+To see how a circuit in Mealy form `processes' a value, we precompose it with
+a register containing the inputs.
+Applying the \((\streamingeqn)\) (`streaming') rule from \cref{fig:rules} to
+this creates two copies  of the circuit: one for what is happening `now' and the
+other for what is happening `later'.
+The `now' circuit is some values applied to a combinational circuit: the four
+rules on the right of \cref{fig:rules} can then be applied to reduce this to
+an output value and a next state.
 
 \begin{corollary}[Productivity (\cite{ghica2024fully}, Cor. 91)]\label{cor:productivity}
     For a sequential circuit \(
@@ -433,6 +436,72 @@ equivalent.
 \end{corollary}
 
 \paragraph*{Algebraic semantics.}
+
+The previous section gives an upper bound on checking observational equivalence,
+but it is still an \emph{exponential} upper bound.
+It is often more efficient to use \emph{equational reasoning} to determine if
+two circuits have the same behaviour rather than fully evaluating their
+behaviour.
+An ad-hoc equational theory was presented in~\cite{ghica2016categorical} but
+these were picked as `reasonable' equations on circuits; here we are guided by
+the stream semantics.
+
+\begin{figure}[p]
+    \centering
+    \(
+    \equationdisplay{
+        \iltikzfig{strings/structure/monoid/unitality-l-lhs}
+    }{
+        \iltikzfig{strings/structure/monoid/unitality-l-rhs}
+    }{
+        \monoidunitleqn
+    }
+    \quad
+    \equationdisplay{
+        \iltikzfig{strings/structure/monoid/unitality-r-lhs}
+    }{
+        \iltikzfig{strings/structure/monoid/unitality-r-rhs}
+    }{
+        \monoidunitreqn
+    }
+    \quad
+    \equationdisplay{
+        \iltikzfig{circuits/axioms/bottom-delay-lhs}
+    }{
+        \iltikzfig{circuits/axioms/bottom-delay-rhs}
+    }{
+        \bottomdelayeqn
+    }
+    \quad
+    \equationdisplay{
+        \iltikzfig{circuits/instant-feedback/equation-lhs}
+    }{
+        \iltikzfig{circuits/instant-feedback/equation-rhs}
+    }{
+        \instantfeedbackeqn
+    }
+    \)
+    \caption{
+        Set of Mealy equations
+    }
+    \label{fig:mealy-equations}
+\end{figure}
+
+The notion of Mealy form will once again come in useful, so we first reframe the
+\((\mealyeqn)\) rule in terms of equations shown in \cref{fig:mealy-equations}.
+
+A circuit in Mealy form has a \emph{state} and a \emph{combinational core}.
+One might think that we can just use equations on combinational circuits to
+translate between circuits with the same state, but this is not guaranteed to
+work: some circuits with the same behaviour and state may have cores with
+different semantics.
+
+
+One class of equations in our equational theory will be
+those to bring combinational circuits into some kind of normal form.
+For Belnap circuits, this normal form is a variation of the standard disjunctive
+normal form used for Booleans, and the equations necessary to bring circuits to
+this form are illustrated in \cref{fig:normal-form-equations}.
 
 \begin{figure}[p]
     \centering
@@ -690,6 +759,20 @@ equivalent.
     \label{fig:normal-form-equations}
 \end{figure}
 
+\begin{figure}
+    \centering
+    \(\equationdisplay{
+        \iltikzfig{circuits/productivity/mealy-form}[core=f]
+    }{
+        \iltikzfig{circuits/algebraic/state-encoding}[core=f]
+    }{\mathsf{State}}\)
+    \quad
+    \(\equationdisplay{
+        \iltikzfig{circuits/productivity/mealy-form}[core=f]
+    }{
+        \iltikzfig{circuits/productivity/mealy-form}[core=g]
+    }{\mathsf{Bisim}}\)
+\end{figure}
 
 \printbibliography[heading=bibintoc,title={References}]
 
