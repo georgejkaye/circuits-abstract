@@ -49,18 +49,45 @@
 \date{}
 
 \begin{document}
-    \maketitle
+\maketitle
 
-    \paragraph*{Contribution.}
+\paragraph*{Contribution.}
 
-    \paragraph*{Syntax.}
+Digital circuits are one of the defining technologies of the modern world, so it
+may seem improbable that there are theoretical gaps remaining in their
+understanding.
+However, until recently we did not have a \emph{fully compositional} model of
+digital circuits; by this we mean that a larger circuit can be built from
+smaller circuits and interconnecting wires without paying heed to the internal
+structure of these smaller circuits.
+The sticking point was usually the presence of
+\emph{non-delay-guarded feedback}~\cite{malik1994analysis}, which can lead to
+undesired behaviour and is often forbidden in circuit design.
+Nevertheless, to truly have a compositional theory for \emph{all} digital
+circuits it cannot be ignored, and in fact careful use of it can lead to more
+efficient circuits~\cite{riedel2004cyclic,riedel2012cyclic}.
 
-    \paragraph*{Denotational semantics.}
+This line of work was inspired by that of Lafont on
+\emph{Boolean} circuits~~\cite{lafont2003algebraic}; our current work is the
+direct successor to the more informal foundations of Ghica, Jung and Lopez, in
+which digital circuits are modelled as morphisms in a symmetric traced
+monoidal category (STMC)~\cite{ghica2016categorical,ghica2017diagrammatic}.
+Our contributions are to make this work rigorous, and to this end we present
+three sound and complete semantics for digital circuits: a brand new
+\emph{denotational semantics} for digital circuits based on stream functions
+with certain properties; a refinement and extension of the
+\emph{operational semantics} presented in \cite{ghica2017diagrammatic} to
+operate on open circuits; and a \emph{algebraic semantics} with which circuits
+can be brought to a pseudo-normal form.
 
-    \paragraph*{Operational semantics.}
+\paragraph*{Syntax.}
 
-    \paragraph*{Algebraic semantics.}
+\paragraph*{Denotational semantics.}
 
-    \printbibliography[heading=bibintoc,title={References}]
+\paragraph*{Operational semantics.}
+
+\paragraph*{Algebraic semantics.}
+
+\printbibliography[heading=bibintoc,title={References}]
 
 \end{document}
