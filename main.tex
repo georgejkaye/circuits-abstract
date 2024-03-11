@@ -53,12 +53,11 @@
 
 \paragraph*{Contribution.}
 
-Digital circuits are one of the defining technologies of the modern world, so it
-may seem improbable that there are theoretical gaps remaining in their
-understanding.
+Digital circuits ubiquitous, so it may seem improbable that there are
+theoretical gaps remaining in their understanding.
 However, until recently we did not have a \emph{fully compositional} model of
 digital circuits; by this we mean that a larger circuit can be built from
-smaller circuits and interconnecting wires without paying heed to the internal
+smaller circuits without paying heed to the internal
 structure of these smaller circuits.
 The sticking point was usually the presence of
 \emph{non-delay-guarded feedback}~\cite{malik1994analysis}, which can lead to
@@ -82,7 +81,241 @@ can be brought to a pseudo-normal form.
 
 \paragraph*{Syntax.}
 
+In full generality, the category of sequential digital circuits is generated
+over a \emph{circuit signature} specifying the components that make up circuits
+and the signals that flow in the wires.
+Here we will restrict to a concrete signature
+representing \emph{gate-level circuits}; rather than Boolean values, we use the
+four-valued system of \emph{Belnap logic}.
+
+\begin{definition}[Belnap~\cite{belnap1977useful}]
+    Let \(\values \coloneqq \{\bot,\belnapfalse,\belnaptrue,\top\}\) be the set
+    of \emph{Belnap values}, respectively represent \emph{no signal}
+    (a disconnected wire), a \emph{false signal}, a \emph{true signal}, and
+    \emph{both signals at once} (a short circuit).
+    These values form an \emph{information lattice} \((\values,\ljoin,\lmeet)\)
+    and accept the usual operations of \(\land\), \(\lor\) and \(\neg\), both
+    illustrated in \cref{fig:belnap}.
+    Note that the operations are monotone.
+\end{definition}
+
+\begin{definition}
+    Let \(\scircsigma\) be the STMC freely generated over \(
+    \iltikzfig{strings/structure/monoid/init}[colour=comb]
+    \), \(
+    \iltikzfig{circuits/components/values/vs}[val=\belnapfalse]
+    \), \(
+    \iltikzfig{circuits/components/values/vs}[val=\belnaptrue]
+    \), \(
+    \iltikzfig{circuits/components/values/vs}[val=\top]
+    \), \(
+    \iltikzfig{circuits/components/gates/and}
+    \), \(
+    \iltikzfig{circuits/components/gates/or}
+    \), \(
+    \iltikzfig{circuits/components/gates/not}
+    \), \(
+    \iltikzfig{strings/structure/comonoid/copy}[colour=comb]
+    \), \(
+    \iltikzfig{strings/structure/monoid/merge}[colour=comb]
+    \), \(
+    \iltikzfig{strings/structure/comonoid/discard}[colour=comb]
+    \) and \(
+    \iltikzfig{circuits/components/waveforms/delay}
+    \).
+\end{definition}
+
+The first four generators are the values in \(\values\) where \(\bot\)
+is denoted as \(\iltikzfig{strings/structure/monoid/init}[colour=comb]\).
+These are followed by an \(\andgate\), \(\orgate\) and \(\notgate\) gate, and
+constructs for forking, joining and eliminating wires.
+The final generator is a \emph{delay} of one unit of time.
+Light blue components are \emph{combinational}: they model functions.
+Dark green components are \emph{sequential}: they add state to circuits.
+We draw arbitrary combinational and sequential circuits as \(
+\iltikzfig{strings/category/f}[box=f,colour=comb]
+\) and \(
+\iltikzfig{strings/category/f}[box=f,colour=seq]
+\) respectively.
+
 \paragraph*{Denotational semantics.}
+
+Circuits in \(\scircsigma\) are purely \emph{syntax}; we now interpret circuit
+morphisms as \emph{stream functions}.
+Streams \(\sigma,\tau \in \stream{A}\) can be viewed as functions
+\(\nat \to A\), so we will use the notation \(\sigma(i)\) to obtain the \(i\)-th
+element of a stream.
+We must identify the properties of stream functions that describe circuit
+behaviour.
+
+\begin{definition}[Stream derivative~\cite{rutten2006algebraic}]
+    Let \(\morph{\streamderv}{\valuetuplestream{m}}{\valuetuplestream{m}}\) be
+    defined as \(\sigma \mapsto (i \mapsto \sigma(i+1))\).
+    Given a stream function \(
+    \morph{f}{\valuetuplestream{m}}{\valuetuplestream{n}}
+    \) and input \(a \in \valuetuple{m}\), its \emph{stream derivative on \(a\)}
+    is the stream function \(
+    \sigma \mapsto \streamderv(f(a \streamcons \sigma))
+    \).
+\end{definition}
+
+\begin{definition}
+    Let \(\morph{\streamderv}{\valuetuplestream{m}}{\valuetuplestream{m}}\) be
+    a stream function; \(f\) is called \emph{causal} if \(\sigma(j) = \tau(j)\)
+    for all \(j \leq i\) implies \(f(\sigma)(i) = f(\tau)(i)\), and it is called
+    \emph{finitely specified} if it has finitely many stream derivatives.
+\end{definition}
+
+As the components of circuits are monotone, stream functions modelling circuits
+must also be monotone with respect to the pointwise ordering on stream elements.
+
+\begin{definition}
+    Let \(\mathbf{Stream}\) be the PROP with morphisms \(m \to n\) the monotone,
+    causal, finitely specified functions
+    \(\valuetuplestream{m} \to \valuetuplestream{n}\).
+\end{definition}
+
+The first result we have is that this category is \emph{traced}, so it is a
+suitable setting for modelling digital circuits with feedback.
+
+\begin{proposition}[\cite{ghica2024fully}, Prop. 25]
+    \(\mathbf{Stream}\) is traced.
+\end{proposition}
+
+Semantics are assigned to circuits using a \emph{traced PROP morphism}: a
+symmetric traced monoidal functor between PROPs.
+
+\begin{definition}
+    Let \(\morph{\circuittostream{}}{\scircsigma}{\mathbf{Stream}}\) be
+    the traced PROP morphism defined as
+    \begin{gather*}
+        \circuittostream[
+            \iltikzfig{strings/structure/monoid/init}[colour=comb]
+        ]{}()(i)
+        \coloneqq
+        \bot
+        \quad
+        \circuittostream[
+            \iltikzfig{circuits/components/gates/and}
+        ]{}(\sigma, \tau)(i)
+        \coloneqq
+        \sigma(i) \land \tau(i)
+        \quad
+        \circuittostream[
+            \iltikzfig{circuits/components/gates/or}
+        ]{}(\sigma, \tau)(i)
+        \coloneqq
+        \sigma(i) \lor \tau(i)
+        \\[0.25em]
+        \circuittostream[
+            \iltikzfig{circuits/components/gates/not}
+        ]{}(\sigma)(i)
+        \coloneqq
+        \neg \sigma(i)
+        \quad
+        \circuittostream[
+            \iltikzfig{strings/structure/comonoid/copy}[colour=comb]
+        ]{}(\sigma)(i)
+        \coloneqq
+        (\sigma(i), \sigma(i))
+        \quad
+        \circuittostream[
+            \iltikzfig{strings/structure/monoid/merge}[colour=comb]
+        ]{}(\sigma, \tau)(i)
+        \coloneqq
+        \sigma(i) \ljoin \tau(i)
+        \circuittostream[
+            \iltikzfig{strings/structure/comonoid/discard}[colour=comb]
+        ]{}(\sigma)(i)
+        \coloneqq
+        ()
+        \\[0.25em]
+        \quad
+        \circuittostream[
+            \iltikzfig{circuits/components/values/vs}[val=v]
+        ]{}()(k+1)
+        \coloneqq
+        \bot
+        \quad
+        \circuittostream[
+            \iltikzfig{circuits/components/values/vs}[val=v]
+        ]{}()(0)
+        \coloneqq
+        v
+        \quad
+        \circuittostream[
+            \iltikzfig{circuits/components/waveforms/delay}
+        ]{}(\sigma)(0)
+        \coloneqq
+        \bot
+        \quad
+        \circuittostream[
+            \iltikzfig{circuits/components/waveforms/delay}
+        ]{}(\sigma)(k+1)
+        \coloneqq
+        \sigma(k)
+    \end{gather*}
+\end{definition}
+
+\begin{figure*}[p]
+    \centering
+    \tikzfig{circuits/a4}
+    \qquad
+    \begin{tabular}{|c|cccc|}
+        \hline
+        \(\land\)        & \(\bot\)         & \(\belnapfalse\) & \(\belnaptrue\)  & \(\top\)         \\
+        \hline
+        \(\bot\)         & \(\bot\)         & \(\belnapfalse\) & \(\bot\)         & \(\belnapfalse\) \\
+        \(\belnapfalse\) & \(\belnapfalse\) & \(\belnapfalse\) & \(\belnapfalse\) & \(\belnapfalse\) \\
+        \(\belnaptrue\)  & \(\bot\)         & \(\belnapfalse\) & \(\belnaptrue\)  & \(\top\)         \\
+        \(\top\)         & \(\belnapfalse\) & \(\belnapfalse\) & \(\top\)         & \(\top\)         \\
+        \hline
+    \end{tabular}
+    \quad
+    \begin{tabular}{|c|c|}
+        \hline
+        \(\neg\)         &                  \\
+        \hline
+        \(\bot\)         & \(\bot\)         \\
+        \(\belnaptrue\)  & \(\belnapfalse\) \\
+        \(\belnapfalse\) & \(\belnaptrue\)  \\
+        \(\top\)         & \(\top\)         \\
+        \hline
+    \end{tabular}
+    \quad
+    \begin{tabular}{|c|cccc|}
+        \hline
+        \(\lor\)         & \(\bot\)        & \(\belnapfalse\) & \(\belnaptrue\) & \(\top\)        \\
+        \hline
+        \(\bot\)         & \(\bot\)        & \(\bot\)         & \(\belnaptrue\) & \(\belnaptrue\) \\
+        \(\belnapfalse\) & \(\bot\)        & \(\belnapfalse\) & \(\belnaptrue\) & \(\top\)        \\
+        \(\belnaptrue\)  & \(\belnaptrue\) & \(\belnaptrue\)  & \(\belnaptrue\) & \(\belnaptrue\) \\
+        \(\top\)         & \(\belnaptrue\) & \(\top\)         & \(\belnaptrue\) & \(\top\)        \\
+        \hline
+    \end{tabular}
+
+    \caption{The lattice structure on \(\values\), and the truth tables
+        of Belnap logic gates~\cite{belnap1977useful}.}
+    \label{fig:belnap}
+\end{figure*}
+
+
+\begin{definition}[Denotational equivalence]
+    Two circuits are \emph{denotationally equivalent} \(
+    \iltikzfig{strings/category/f}[box=f,colour=seq]
+    \approx
+    \iltikzfig{strings/category/f}[box=g,colour=seq]
+    \) if \(
+    \circuittostream[\iltikzfig{strings/category/f}[box=f,colour=seq]]{}
+    =
+    \circuittostream[\iltikzfig{strings/category/f}[box=g,colour=seq]]{}
+    \).
+\end{definition}
+
+\begin{corollary}[\cite{ghica2024fully}, Cor. 67]
+    There is an isomorphism of PROPs
+    \(\scirc{\Sigma} / {\approx} \cong \mathbf{Stream}\).
+\end{corollary}
 
 \paragraph*{Operational semantics.}
 
