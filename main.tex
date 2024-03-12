@@ -20,7 +20,8 @@
 \usepackage[style=alphabetic]{biblatex}
 \usepackage[
     colorlinks=true,
-    citecolor=Green, linkcolor=NavyBlue,
+    citecolor=Green,
+    linkcolor=NavyBlue,
     urlcolor=BrickRed,
     pdftitle={A Fully Compositional Theory of Sequential Digital Circuits}
 ]{hyperref}
@@ -102,6 +103,11 @@ four-valued system of \emph{Belnap logic}.
     Note that the operations are monotone.
 \end{definition}
 
+To aid in the presentation, we use the graphical calculus of
+\emph{string diagrams}~\cite{joyal1991geometry,joyal1996traced,selinger2011survey},
+in which terms equal by axioms of STMCs are depicted as isomorphism diagrams;
+`only connectivity matters'.
+
 \begin{definition}
     Let \(\scircsigma\) be the STMC freely generated over \(
     \iltikzfig{strings/structure/monoid/init}[colour=comb]
@@ -130,7 +136,7 @@ four-valued system of \emph{Belnap logic}.
 
 The first four generators are the values in \(\values\) where \(\bot\)
 is denoted as \(\iltikzfig{strings/structure/monoid/init}[colour=comb]\).
-These are followed by an \(\andgate\), \(\orgate\) and \(\notgate\) gate, and
+These are followed by \(\andgate\), \(\orgate\) and \(\notgate\) gates, and
 constructs for forking, joining and eliminating wires.
 The final generator is a \emph{delay} of one unit of time.
 Light blue circuits \(
@@ -174,8 +180,7 @@ suitable setting for modelling digital circuits with feedback.
 
 Semantics are assigned using a PROP morphism
 \(\morph{\circuittostream{}}{\scircsigma}{\mathbf{Stream}}\).
-On combinational circuits this is straightforward;  on sequential circuits this
-is \(
+which acts on sequential components as \(
 \circuittostream[
     \iltikzfig{circuits/components/values/vs}[val=v]
 ]{}()(0)
@@ -415,11 +420,10 @@ an output value and a next state.
     \label{fig:productivity}
 \end{figure}
 
-The general procedure for processing the inputs to a circuit using productivity
-is illustrated in \cref{fig:productivity}.
+The general procedure for processing the inputs to a circuit is illustrated in
+\cref{fig:productivity}.
 This can be applied repeatedly in order to determine the outputs of a
-circuit over time.
-By applying it enough we can tell if two circuits are \emph{observationally}
+circuit over time, and to tell if two circuits are \emph{observationally}
 equivalent.
 
 \begin{definition}[Observational equivalence]
@@ -449,6 +453,8 @@ these were picked as `reasonable' equations on circuits; here we are guided by
 the stream semantics.
 The notion of Mealy form will once again come in useful, so we first reframe the
 \((\mealyeqn)\) rule in terms of equations shown in \cref{fig:mealy-equations}.
+The usual strategy to show that an equational theory is sound and complete is to
+define some sort of `normal form' into which all terms can be translated.
 
 \begin{figure}[p]
     \centering
@@ -491,12 +497,6 @@ The notion of Mealy form will once again come in useful, so we first reframe the
     \label{fig:mealy-equations}
 \end{figure}
 
-A circuit in Mealy form has a \emph{state} and a \emph{combinational core}.
-One might think that we can just use equations on combinational circuits to
-translate between circuits with the same state, but this is not guaranteed to
-work: some circuits with the same behaviour and state may have cores with
-different semantics.
-
 \begin{definition}
     Let \(\lvert{-}\rvert\) be a fixed procedure mapping a function
     \(\morph{f}{\valuetuple{m}}{\valuetuple{n}}\) to a circuit \(
@@ -518,44 +518,53 @@ normal form used for Booleans; the details are discussed
 in~\cite[App. A]{ghica2024fully}.
 
 \begin{lemma}
-    Any combinational circuit \(
+    Any combinational Belnap circuit \(
     \iltikzfig{strings/category/f}[box=f,colour=comb]
-    \) is equal to a circuit in the image of \(\lvert{-}\rvert\) by the equations in
-    \cref{fig:normal-form-equations}.
+    \) is equal to a circuit in the image of \(\lvert{-}\rvert\) by the
+    equations in \cref{fig:normal-form-equations}.
 \end{lemma}
 
-Now that
+A circuit in Mealy form has a \emph{state} and a \emph{combinational core}.
+To translate between two behaviourally equivalent circuits a good starting point
+is to translate them into circuits with the same state.
+We will omit the fine details, but intuitively, an
+\emph{encoding function} is a monotone function
+\(\morph{\gamma}{\valuetuple{x}}{\valuetuple{y}}\) which is `injective on the
+states we care about', i.e.\ the next states produced by the combinational core
+starting from some initial state.
 
-\begin{definition}[Encoding]
+\begin{lemma}
+    Let \(\gamma\) be an encoding function with inverse \(\gamma^{-1}\); then
+    the \emph{encoding equation} \((\mathsf{Encode})\) in
+    \cref{fig:mealy-transformation-equations} is sound.
+\end{lemma}
 
-\end{definition}
+Even when two circuits in Mealy form have the same initial state, they may not
+have behaviourally equivalent combinational cores; this is because the functions
+are not equal but \emph{bisimilar} when starting from this initial state.
+Given two functions we can compute if they are bisimilar from some initial state
+by repeatedly executing them in `lockstep' for all inputs and checking that they
+agree on the outputs for each successive pair of states; since there are
+finitely many possible states this procedure will eventually terminate.
 
-Now the normalisation equations can be used to translate the new combinational
-core back into a normal form.
-But even if two circuits in Mealy form have the same state, they
+\begin{lemma}
+    The family of \emph{bisimilarity equations} \((\mathsf{Bisim})\) in
+    \cref{fig:mealy-transformation-equations} is sound.
+\end{lemma}
 
-\begin{definition}{Bisimilarity}
-    Given two functions \(\morph{f}{\valuetuple{x+m}}{\valuetuple{x+n}}\) and
-    \(\listvar{s} \in \valuetuple{x}\), let their
-    \emph{states from \(\listvar{s}\)} be the set \(
-    S_{f,g,\listvar{s}} \subseteq \valuetuple{x} \times \valuetuple{x}
-    \) containing
-    \((\listvar{s}, \listvar{s})\) and closed under \(
-    (\listvar{r},\listvar{t})
-    \mapsto
-    \left(
-    \proj{0}(f(\listvar{r},\listvar{v})),
-    \proj{0}(g(\listvar{t},\listvar{t}))
-    \right)\)
-    for any \(\listvar{v} \in \valuetuple{m}\).
-    The functions \(f\) and \(g\) are \emph{bisimilar from \(\listvar{s}\)}
-    if for each \((\listvar{r}, \listvar{t}) \in S_{f,g,\listvar{s}}\) and
-    \(\listvar{v} \in \valuetuple{m}\), \(
-    \proj{1}(f(\listvar{r}, \listvar{v}))
-    =
-    \proj{1}(f(\listvar{t}, \listvar{v}))
-    \).
-\end{definition}
+We write \(\mathcal{E}\) for the equations in
+\cref{fig:mealy-equations,fig:normal-form-equations,fig:mealy-transformation-equations},
+which are enough for a sound and complete equational theory.
+Given two denotationally equivalent circuits, we translate them into Mealy
+form, use the encoding equation to translate them into Mealy form where the
+initial state is a concatenation of the original states,
+then use the bisimilarity equation.
+
+\begin{theorem}
+    There is an isomorphism of PROPs
+    \(\scircsigma / \mathcal{E} \cong \scircsigma / {\approx}\).
+\end{theorem}
+
 
 \begin{figure}[p]
     \centering
@@ -820,7 +829,7 @@ But even if two circuits in Mealy form have the same state, they
         \iltikzfig{circuits/productivity/mealy-form}[core=|f|]
     }{
         \iltikzfig{circuits/algebraic/state-encoding}[core=|f|]
-    }{\mathsf{State}}\)
+    }{\mathsf{Encode}}\)
     \qquad
     \(\equationdisplay{
         \iltikzfig{circuits/productivity/mealy-form}[core=|f|]
@@ -835,6 +844,15 @@ But even if two circuits in Mealy form have the same state, they
     \caption{Families of \emph{Mealy transformation equations}}
     \label{fig:mealy-transformation-equations}
 \end{figure}
+
+\paragraph*{Conclusion.}
+
+The fully compositional theory of sequential digital circuits sets a foundation
+which will hopefully unlock new methods for working with circuits, such as
+partial evaluation techniques.
+One avenue we are particuarly interested in is that of \emph{automating}
+circuit reasoning using \emph{string diagram graph rewriting}, which has been
+studied in-depth recently~\cite{bonchi2022string,ghica2023rewriting}.
 
 \printbibliography[heading=bibintoc,title={References}]
 
