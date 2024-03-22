@@ -285,18 +285,21 @@ registers, i.e. reductions such that \
 
 \begin{definition}
     A circuit is in \emph{pre-Mealy form} if it is in the form \(
-    \iltikzfig{circuits/productivity/pre-mealy-form}[core=\hat{F},state=\listvar{s},dom=m,cod=n,trace=x,delay=y]
+    \iltikzfig{circuits/productivity/pre-mealy-form}[core=\hat{f},state=\listvar{s},dom=m,cod=n,trace=x,delay=y]
     \) and in \emph{Mealy form} if it is in the form \(
-    \iltikzfig{circuits/productivity/mealy-form}[core=\hat{F},state=\listvar{s},dom=m,cod=n,delay=y]
+    \iltikzfig{circuits/productivity/mealy-form}[core=\hat{f},state=\listvar{s},dom=m,cod=n,delay=y]
     \).
 \end{definition}
 
 Any circuit can be translated into pre-Mealy form using the \((\mealyeqn)\)
 rule in \cref{fig:rules}.
 However, the \emph{non-delay-guarded feedback} blocks attempts to translate this
-into Mealy form.
+into Mealy form; note that since the `core' circuit \(
+\iltikzfig{strings/category/f-2-2}[box=\hat{f},colour=comb]
+\) is combinational, the trace cannot simply be incorporated inside it.
 As the components of our circuits are monotone and we work in a finite lattice,
-we can exploit the Kleene fixed-point theorem.
+we can eliminate non-delay-guarded feedback using the Kleene fixed-point
+theorem.
 
 \begin{definition}[Iteration]
     For a combinational circuit \(
@@ -333,11 +336,13 @@ an output value and a next state.
     For a sequential circuit \(
     \iltikzfig{strings/category/f}[box=f,colour=seq,dom=m,cod=n]
     \) and inputs \(\listvar{v} \in \valuetuple{m}\), there exists
-    \(\listvar{w} \in \valuetuple{n}\) such that \(
+    \(\listvar{w} \in \valuetuple{n}\) and sequential circuit \(
+    \iltikzfig{strings/category/f}[box=g,colour=seq,dom=m,cod=n]
+    \) such that \(
     \iltikzfig{circuits/productivity/productive-goal-lhs}[box=f,input=\listvar{v},dom=m,cod=n]
     \reduction^\star
     \iltikzfig{circuits/productivity/productive-goal-rhs}[box=g,output=\listvar{w},dom=m,cod=n]
-    \) by applying \(\mealyeqn\), \(\instantfeedbackeqn\) and \(\streamingeqn\)
+    \) by applying \(\mealyeqn\), \(\instantfeedbackeqn\) and \(\streamingeqn\) once
     followed by the \((\forkeqn)\), \((\joineqn)\), \((\stubeqn)\)
     and the \((\gateeqn)\) rules exhaustively.
 \end{corollary}
@@ -443,14 +448,12 @@ equivalent.
 
 \paragraph*{Algebraic semantics.}
 
-The previous section gives an upper bound on checking observational equivalence,
-but it is still an \emph{exponential} upper bound.
+The previous section gives an \emph{exponential} upper bound on checking
+observational equivalence.
 It is often more efficient to use \emph{equational reasoning} to determine if
-two circuits have the same behaviour rather than fully evaluating their
-behaviour.
-An ad-hoc equational theory was presented in~\cite{ghica2016categorical} but
-these were picked as `reasonable' equations on circuits; here we are guided by
-the stream semantics.
+two circuits have the same behaviour.
+An equational theory was presented~\cite{ghica2016categorical} but here we are
+guided by the stream semantics.
 The notion of Mealy form will once again come in useful, so we first reframe the
 \((\mealyeqn)\) rule in terms of equations shown in \cref{fig:mealy-equations}.
 The usual strategy to show that an equational theory is sound and complete is to
@@ -492,7 +495,7 @@ define some sort of `normal form' into which all terms can be translated.
     }
     \)
     \caption{
-        Set of Mealy equations
+        Set of \emph{Mealy equations}
     }
     \label{fig:mealy-equations}
 \end{figure}
@@ -514,8 +517,7 @@ One can think of \(|f|\) as the `canonical syntactic representation' of a
 function; if a circuit is in this form it is easy to tell what function it
 represents.
 For Belnap circuits, this normal form is a variation of the standard disjunctive
-normal form used for Booleans; the details are discussed
-in~\cite[App. A]{ghica2024fully}.
+normal form for Booleans~\cite[App. A]{ghica2024fully}.
 
 \begin{lemma}
     Any combinational Belnap circuit \(
@@ -525,40 +527,39 @@ in~\cite[App. A]{ghica2024fully}.
 \end{lemma}
 
 A circuit in Mealy form has a \emph{state} and a \emph{combinational core}.
-To translate between two behaviourally equivalent circuits a good starting point
-is to translate them into circuits with the same state.
-We will omit the fine details, but intuitively, an
-\emph{encoding function} is a monotone function
-\(\morph{\gamma}{\valuetuple{x}}{\valuetuple{y}}\) which is `injective on the
-states we care about', i.e.\ the next states produced by the combinational core
-starting from some initial state.
+By using productivity, one obtains a set \(S \subseteq \valuetuple{y}\) of
+\emph{circuit states} that the circuit assumes over time.
+We need equations to translate between different state sets syntactically.
+Two states are equivalent with respect to a combinational core if the produced
+outputs are equal and the transitions are equivalent; an
+\emph{encoding function} \(\morph{\gamma}{\valuetuple{x}}{\valuetuple{y}}\) is a
+function with an inverse \emph{decoder}
+\(\morph{\gamma^{-1}}{\valuetuple{y}}{\valuetuple{x}}\) such that
+\(\gamma^{-1}(\gamma(s))\) is equivalent to \(s\).
 
 \begin{lemma}
-    Let \(\gamma\) be an encoding function with inverse \(\gamma^{-1}\); then
-    the \emph{encoding equation} \((\mathsf{Encode})\) in
-    \cref{fig:mealy-transformation-equations} is sound.
+    For any encoding function \(\gamma\) with inverse \(\gamma^{-1}\); then
+    the equations in \cref{fig:encoding-equation} are sound.
 \end{lemma}
 
-Even when two circuits in Mealy form have the same initial state, they may not
-have behaviourally equivalent combinational cores; this is because the functions
-are not equal but \emph{bisimilar} when starting from this initial state.
-Given two functions we can compute if they are bisimilar from some initial state
-by repeatedly executing them in `lockstep' for all inputs and checking that they
-agree on the outputs for each successive pair of states; since there are
-finitely many possible states this procedure will eventually terminate.
+The encoding equations can be used to translate a circuit into one with a
+bisimilar set of circuit states.
+However, the cores of these circuits still may not be behaviourally equivalent;
+they just agree on the set of circuit states.
+We need one final family of equations to `hot-swap' combinational cores that
+behave the same on this set of states.
 
 \begin{lemma}
-    The family of \emph{bisimilarity equations} \((\mathsf{Bisim})\) in
-    \cref{fig:mealy-transformation-equations} is sound.
+    The family of \emph{restriction equations} \((\restrictionequation)\) in
+    \cref{fig:restriction-equations} is sound.
 \end{lemma}
 
 We write \(\mathcal{E}\) for the equations in
-\cref{fig:mealy-equations,fig:normal-form-equations,fig:mealy-transformation-equations},
+\cref{fig:mealy-equations,fig:normal-form-equations,fig:restriction-equations,fig:encoding-equation},
 which are enough for a sound and complete equational theory.
 Given two denotationally equivalent circuits, we translate them into Mealy
-form, use the encoding equation to translate them into Mealy form where the
-initial state is a concatenation of the original states,
-then use the bisimilarity equation.
+form, use the encoding equation to map between their state sets, then use the
+restriction equation if necessary.
 
 \begin{theorem}
     There is an isomorphism of PROPs
@@ -587,7 +588,9 @@ then use the bisimilarity equation.
         }{
             \joinandeqn
         }\)
-        \\[1em]
+        \\[0.25em]
+        \rule{\textwidth}{0.1mm}
+        \\[0.5em]
         \(\equationdisplay{
             \iltikzfig{circuits/axioms/belnap/translation/join-or-lhs}
         }{
@@ -614,7 +617,9 @@ then use the bisimilarity equation.
             \demorganor
         }\)
     \end{minipage}
-    \\[1em]
+    \\[0.5em]
+    \rule{\textwidth}{0.1mm}
+    \\[0.5em]
     \(\equationdisplay{
         \iltikzfig{circuits/axioms/belnap/translation/not-fork-lhs}
     }{
@@ -646,7 +651,9 @@ then use the bisimilarity equation.
     }{
         \joinforkeqn
     }\)
-    \\[1em]
+    \\[0.25em]
+    \rule{\textwidth}{0.1mm}
+    \\[0.5em]
     \(\equationdisplay{
         \iltikzfig{strings/structure/bialgebra/init-copy-lhs}
     }{
@@ -670,7 +677,9 @@ then use the bisimilarity equation.
     }{
         \ororidemeqn
     }\)
-    \\[1em]
+    \\[0.25em]
+    \rule{\textwidth}{0.1mm}
+    \\[0.5em]
     \quad
     \(\equationdisplay{
         \iltikzfig{circuits/axioms/belnap/and-or-distributivity-lhs}
@@ -695,7 +704,9 @@ then use the bisimilarity equation.
     }{
         \forkcommeqn
     }\)
-    \\[1em]
+    \\[0.25em]
+    \rule{\textwidth}{0.1mm}
+    \\[0.5em]
     \(\equationdisplay{
         \iltikzfig{circuits/axioms/belnap/translation/bot-and-lhs}
     }{
@@ -713,7 +724,7 @@ then use the bisimilarity equation.
     }\)
     \quad
     \(\equationdisplay{
-        \iltikzfig{circuits/axioms/belnap/translation/bot-and-lhs}
+        \iltikzfig{circuits/axioms/belnap/translation/bot-not-lhs}
     }{
         \iltikzfig{circuits/axioms/belnap/translation/bot-x-rhs}
     }{
@@ -727,7 +738,9 @@ then use the bisimilarity equation.
     }{
         \dneeqn
     }\)
-    \\[1em]
+    \\[0.25em]
+    \rule{\textwidth}{0.1mm}
+    \\[0.5em]
     \(\equationdisplay{
         \iltikzfig{circuits/axioms/belnap/and-associativity-lhs}
     }{
@@ -739,7 +752,9 @@ then use the bisimilarity equation.
     }{
         \iltikzfig{circuits/axioms/belnap/or-associativity-rhs}
     }{\orassoc}\)
-    \\[1em]
+    \\[0.25em]
+    \rule{\textwidth}{0.1mm}
+    \\[0.5em]
     \(\equationdisplay{
         \iltikzfig{circuits/axioms/belnap/and-commutativity-lhs}
     }{
@@ -763,7 +778,9 @@ then use the bisimilarity equation.
     }{
         \iltikzfig{circuits/axioms/belnap/or-idempotent-rhs}
     }{\oridemeqn}\)
-    \\[1em]
+    \\[0.25em]
+    \rule{\textwidth}{0.1mm}
+    \\[0.5em]
     \(\equationdisplay{
         \iltikzfig{circuits/axioms/belnap/and-or-distributivity-lhs}
     }{
@@ -775,7 +792,9 @@ then use the bisimilarity equation.
     }{
         \iltikzfig{circuits/axioms/belnap/or-and-distributivity-rhs}
     }{\oranddisteqn}\)
-    \\[1em]
+    \\[0.25em]
+    \rule{\textwidth}{0.1mm}
+    \\[0.5em]
     \(\equationdisplay{
         \iltikzfig{circuits/axioms/belnap/absorption-2-lhs}
     }{
@@ -798,8 +817,10 @@ then use the bisimilarity equation.
         \iltikzfig{circuits/axioms/belnap/translation/or-fork-lhs}
     }{
         \iltikzfig{circuits/axioms/belnap/translation/or-fork-rhs}
-    }{\andforkeqn}\)
-    \\[1em]
+    }{\orforkeqn}\)
+    \\[0.25em]
+    \rule{\textwidth}{0.1mm}
+    \\[0.5em]
     \(\equationdisplay{
         \iltikzfig{strings/structure/comonoid/commutativity-rhs}
     }{
@@ -825,24 +846,135 @@ then use the bisimilarity equation.
 
 \begin{figure}
     \centering
-    \(\equationdisplay{
-        \iltikzfig{circuits/productivity/mealy-form}[core=|f|]
+    \(
+    \equationdisplay{
+        \iltikzfig{circuits/productivity/mealy-form}[core=|f|,delay=x, colour=seq]
     }{
-        \iltikzfig{circuits/algebraic/state-encoding}[core=|f|]
-    }{\mathsf{Encode}}\)
-    \qquad
+        \iltikzfig{circuits/algebraic/state-encoding}[core=|f|,delay=x]
+    }{
+        \encodingequation
+    }
+    \)
+    \\[0.25em]
+    \rule{\textwidth}{0.1mm}
+    \\[0.5em]
+    \(
+    \equationdisplay{
+        \iltikzfig{circuits/axioms/gate-lhs}
+    }{
+        \iltikzfig{circuits/axioms/gate-rhs}
+    }{
+        \gateeqn
+    }
+    \quad
+    \equationdisplay{
+        \iltikzfig{circuits/axioms/fork-lhs}
+    }{
+        \iltikzfig{circuits/axioms/fork-rhs}
+    }{
+        \forkeqn
+    }
+    \quad
+    \equationdisplay{
+        \iltikzfig{circuits/axioms/join-lhs}
+    }{
+        \iltikzfig{circuits/axioms/join-rhs}
+    }{
+        \joineqn
+    }
+    \)
+    \\[0.25em]
+    \rule{\textwidth}{0.1mm}
+    \\[0.5em]
+    \(
+    \equationdisplay{
+        \iltikzfig{circuits/axioms/stub-lhs}
+    }{
+        \iltikzfig{strings/monoidal/empty}
+    }{
+        \stubeqn
+    }
+    \quad
+    \equationdisplay{
+        \iltikzfig{circuits/axioms/delay-fork-lhs}
+    }{
+        \iltikzfig{circuits/axioms/delay-fork-rhs}
+    }{
+        \delayforkeqn
+    }
+    \quad
+    \equationdisplay{
+        \iltikzfig{circuits/axioms/bottom-delay-lhs}
+    }{
+        \iltikzfig{circuits/axioms/bottom-delay-rhs}
+    }{
+        \bottomdelayeqn
+    }
+    \quad
+    \equationdisplay{
+        \iltikzfig{circuits/axioms/streaming-lhs}
+    }{
+        \iltikzfig{circuits/axioms/streaming-rhs}[gate=p]
+    }{
+        \streamingeqn
+    }
+    \)
+    \\[0.25em]
+    \rule{\textwidth}{0.1mm}
+    \\[0.5em]
+    \(
+    \equationdisplay{
+        \iltikzfig{strings/structure/comonoid/unitality-l-lhs}
+    }{
+        \iltikzfig{strings/structure/comonoid/unitality-l-rhs}
+    }{
+        \comonoiduniteqnletter
+    }
+    \quad
+    \equationdisplay{
+        \iltikzfig{strings/structure/monoid/associativity-lhs}
+    }{
+        \iltikzfig{strings/structure/monoid/associativity-rhs}
+    }{
+        \monoidassoceqnletter
+    }
+    \quad
+    \equationdisplay{
+        \iltikzfig{strings/structure/monoid/commutativity-lhs}
+    }{
+        \iltikzfig{strings/structure/monoid/commutativity-rhs}
+    }{
+        \monoidcommeqnletter
+    }
+    \quad
+    \equationdisplay{
+        \iltikzfig{strings/structure/bialgebra/merge-copy-lhs}
+    }{
+        \iltikzfig{strings/structure/bialgebra/merge-copy-rhs}
+    }{
+        \joinforkeqn
+    }
+    \)
+    \caption{
+        Equations for encoding circuit states
+    }
+    \label{fig:encoding-equation}
+\end{figure}
+
+\begin{figure}
+    \centering
     \(\equationdisplay{
         \iltikzfig{circuits/productivity/mealy-form}[core=|f|]
     }{
         \iltikzfig{circuits/productivity/mealy-form}[core=|g|]
-    }{\mathsf{Bisim}}\)
+    }{\restrictionequation}\)
     \,\,
-    \begin{minipage}{0.15\textwidth}
+    \begin{minipage}{0.25\textwidth}
         \centering
-        where \(f\) and \(g\) are bisimilar from \(\listvar{s}\)
+        where \(f\) and \(g\) act the same on circuit states
     \end{minipage}
-    \caption{Families of \emph{Mealy transformation equations}}
-    \label{fig:mealy-transformation-equations}
+    \caption{Family of \emph{restriction} equations}
+    \label{fig:restriction-equations}
 \end{figure}
 
 \paragraph*{Conclusion.}
